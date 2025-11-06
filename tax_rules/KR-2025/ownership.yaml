@@ -1,0 +1,43 @@
+version: "KR-2025.11-ownership"
+effective:
+  from: "2025-01-01"
+  to: "2025-12-31"
+sources:
+  - name: 지방세법/국세청 개인신고 안내(공동소유 관련 일반 원칙)
+meta:
+  updated_at: "2025-11-05"
+
+schema:
+  # 지분 합은 1.0이 되도록 강제
+  share_total_must_equal: 1.0
+  share_precision: 6            # 내부 계산용 소수점 (예: 0.333333)
+  rounding_mode: "ROUND_HALF_UP"
+  normalize_tolerance: 1e-06
+  # 세대 판정 입력 (동일세대/별도세대 → 세목별 합산 여부에 영향)
+  household_model:
+    unit: "세대"                # 세대(주민등록표, 동일 주소+생계)
+    same_household_effect:
+      capital_gain: "APPLIES"   # 양도: 1세대 1주택 등 판정에 영향
+      glt: "APPLIES"            # 종부세: 1세대 1주택/특례에 영향
+      property_tax: "NEUTRAL"   # 재산세: 고지·분할은 개인 기준이지만 세율구간 적용은 법 규정 따름
+      acquisition: "NEUTRAL"    # 취득세: 원칙적으로 개인별 지분 취득
+
+rules:
+  # 공통 지분 분할 원칙
+  split:
+    acquisition: "과세표준과 세액을 **각 납세자 지분비율**로 안분"    # 취득세
+    capital_gain: >
+      1) 1세대1주택 비과세/고가 판정은 **세대 단위(주택 전체)**로 수행한다.
+      2) 고가 1주택 과세대상 비율 = max((주택 전체 양도가액 - 12억원) / 주택 전체 양도가액, 0).
+      3) 개인별 과세대상양도차익 = (개인 지분 양도차익) × (위 비율).
+      4) 그 후 개인별 장기보유특별공제/기본공제/누진세율·누진공제를 적용한다.  # 양도세
+    property_tax: "현행은 주택 전체 과세표준으로 세액 산출 후 **지분 비율로 분할 고지**"   # 재산세(현행 관행)
+    glt: "각자 보유 지분가액을 합산해 **개인별 과세표준·세율 적용**, 1주택 공동명의 특례는 별도" # 종부세
+
+  # 종부세: 1세대 1주택 **공동명의 특례**(선택적)
+  glt_joint_single_home_election:
+    available: true
+    description: "부부 공동명의 1주택 → 합산 1주택으로 보아 **12억 공제** 등 1세대1주택 체계 적용(기본은 지분별 과세)"
+    application_window: "09-16~09-30"    # 매년 합산배제/특례 신고 기간
+    refs:
+      - "NTS 종합부동산세 합산배제·과세특례 안내(공동명의 1주택자 특례)", "https://www.nts.go.kr/..."  # 실제 NTS 링크로 교체

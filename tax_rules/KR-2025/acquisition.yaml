@@ -1,0 +1,98 @@
+version: "KR-2025.10-acq-detail"
+effective:
+  from: "2025-01-01"
+  to: "2025-12-31"
+sources:
+  - name: 위택스_주택취득세_요약표(이미지_제공자료_2025) 
+    note: "사용자 제공 표(표준세율·중과·감면·신고기한). 수치는 표 해석에 기반 — 운영 전 지자체/위택스 공식 수치로 재검증 필요."
+  - name: 행정안전부_지방세법/시행령
+    url: "https://www.mois.go.kr/"
+meta:
+  updated_at: "2025-11-04"
+  depends_on: ["ownership.yaml"]
+  currency: "KRW"
+  law_refs:
+    - "지방세법 제11조(취득세)"
+    - "지방세법 §151(지방교육세)"
+    - "농어촌특별세법"
+    - "지방세특례제한법(생애최초 등 감면)"
+notes:
+  - "표준세율 구간: 6억원 이하, 6~9억원 구간(세율 점증), 9억원 초과"
+  - "전용면적 85㎡ 초과 주택: 농어촌특별세 0.2% 과세(표 기준)"
+  - "중과(8%, 12%) 시 지방교육세 0.4%, 농어촌특별세 8%중과=0.6%, 12%중과=1% (표 기재)"
+  - "생애최초 감면: 2025.12.31.까지 취득분, 요건 충족 시 감면(세부요건은 지자체 공고/특례 확인)"
+
+rules:
+  standard_purchase:
+    base_rate_formula:
+      description: "주택 취득가액에 따른 기본세율"
+      brackets:
+        - condition: "price <= 600000000"
+          formula: "rate = 0.01"
+          local_education_tax_rate: 0.001
+          rural_special_tax_rate: 0.0
+        - condition: "600000000 < price <= 900000000"
+          formula: "rate = round(((price / 100000000) * (2/3) - 3) / 100, 4)"
+          note: "6~9억 구간 선형세율, 0.0001 단위 반올림"
+          local_education_tax_rate: "rate * 0.1"
+          rural_special_tax_rate: "IF(area>85):0.002 ELSE 0.0"
+        - condition: "price > 900000000"
+          formula: "rate = 0.03"
+          local_education_tax_rate: 0.003
+          rural_special_tax_rate: "IF(area>85):0.002 ELSE 0.0"
+
+  original_acquisition:  # 원시취득(신축 등)
+    acquisition_tax_rate: 0.028
+    local_education_tax_rate: 0.0016
+    rural_special_tax_rate: 0.0020
+
+  gratuitous_acquisition:  # 무상취득(증여)
+    acquisition_tax_rate: 0.035
+    local_education_tax_rate: 0.0020
+    rural_special_tax_rate: 0.0020
+
+  surcharges:  # 다주택·법인 등 중과
+    corporate_flat_rate: 0.12  # 법인 유상취득: 지역 무관 12%
+    purchase_multihome:
+      regulated:    # 조정대상지역
+        second_home_rate: 0.08
+        three_plus_home_rate: 0.12
+      non_regulated:
+        third_home_rate: 0.08
+        four_plus_home_rate: 0.12
+    gift_multihome:
+      regulated_rate: 0.12     # 조정지역 증여
+      non_regulated_rate: 0.035 # 비조정 증여(표 하단 기준치)
+    local_additions_on_surcharges:
+      local_education_tax_rate: 0.004  # (8%/12% 중과 모두 0.4%)
+      rural_special_tax_rate_for_8pct: 0.006
+      rural_special_tax_rate_for_12pct: 0.010
+
+  reliefs:
+    first_time_buyer:
+      active_until: "2025-12-31"
+      reduction_limit:
+        general_home: 2_000_000      # 일반 주택 취득세 감면 한도
+        small_or_low_price_home: 3_000_000  # 소형/저가 주택 감면 한도
+      eligibility:
+        max_acquisition_price: 1_2000_000_000  # 취득가액 12억 이하
+        prior_home_ownership: false   # 본인 및 배우자/세대원 모두 주택 소유 경험 없음
+        residence_requirement:
+          must_report_move_in_within_months: 3
+          must_reside_years_min: 3
+      income_requirement:
+        waived: true   # 연소득 제한 폐지 또는 모든 소득자 대상
+      conditions:
+        - "취득일 기준 무주택 세대원 전체"
+        - "취득가액 ≤ 12억원"
+        - "3개월 이내 전입신고 및 3년 이상 거주"
+        - "감면 주택 외 다른 주택을 취득한 사실 없음"
+      notes:
+        - "소형주택은 전용60㎡ 이하 또는 지자체 기준 저가주택 별도 적용"
+
+  filing_and_payment:
+    deadline_rule: "취득일(잔금/사실상 취득일) 또는 등기일이 속하는 달의 다음 달 말일까지 신고·납부"
+    required_docs:
+      - "매매계약서(또는 증여계약서)"
+      - "부동산거래계약 신고필증"
+      - "분양옵션·잔금영수증 등"

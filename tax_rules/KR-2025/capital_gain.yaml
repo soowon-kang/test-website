@@ -1,0 +1,89 @@
+version: "KR-2025.10-lttd"
+effective:
+  from: "2025-01-01"
+  to: "2025-12-31"
+sources:
+  - name: NTS_양도소득세_세율표
+    url: "https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?mi=2312&cntntsId=7711"
+  - name: NTS_장기보유특별공제율
+    url: "https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?mi=2311&cntntsId=7710"
+meta:
+  updated_at: "2025-11-04"
+  depends_on: ["ownership.yaml"]
+  currency: "KRW"
+  law_refs:
+    - "소득세법 §95② (장기보유특별공제)"
+    - "소득세법 시행령 §159의4 (1세대1주택 장기보유특별공제)"
+    - "소득세법 §104 (양도소득세율)"
+
+rates:
+  brackets:
+    - { up_to: 14000000, rate: 0.06, deduction: 0 }
+    - { up_to: 50000000, rate: 0.15, deduction: 1260000 }
+    - { up_to: 88000000, rate: 0.24, deduction: 5760000 }
+    - { up_to: 150000000, rate: 0.35, deduction: 15900000 }
+    - { up_to: 300000000, rate: 0.38, deduction: 37600000 }
+    - { up_to: 500000000, rate: 0.40, deduction: 65400000 }
+    - { up_to: 1000000000, rate: 0.42, deduction: 105400000 }
+    - { up_to: null, rate: 0.45, deduction: 154400000 }
+
+surcharges:
+  multi_home:
+    normal_extra_rate: 0.20            # 조정대상지역 다주택 중과(일반 규정)
+    active_until: "2026-05-09"         # 한시적 배제 종료일 (정책 변경 시 업데이트)
+    waiver: true                       # true면 이 날짜까지는 중과 배제 적용
+
+high_price_single_home:
+  enabled: true
+  threshold_amount: 1200000000   # 12억원
+  # 세대(주택 전체) 기준으로 초과분 비율을 먼저 계산 → 그 비율을 각 소유자의 지분별 양도차익에 곱함
+  proration:
+    mode: "HOUSEHOLD_RATIO"
+    formula: "ratio = max((sale_total - threshold_amount) / sale_total, 0.0)"
+    rounding:
+      places: 6
+      method: "ROUND_HALF_UP"
+  apply_order:
+    # 1) 세대 기준 비율 산출 → 2) 개인별 지분 양도차익 × 비율 → 3) 개인별 장특공 → 4) 기본공제 → 5) 누진세율·누진공제
+    - "HOUSEHOLD_PRORATION_TO_PER_OWNER_GAIN"
+    - "OWNER_LONG_TERM_DEDUCTION"
+    - "OWNER_BASIC_DEDUCTION"
+    - "PROGRESSIVE_TAX_WITH_DEDUCTION"
+  notes:
+    - "공동명의일 때 12억원 초과분 비율 산식은 전체 주택의 양도가액 기준으로 계산한다."
+    - "개인별 비과세·감면/장특공은 비율 적용 이후의 과세대상양도차익을 기준으로 산출한다."
+
+deductions:
+  basic_deduction: 2500000
+
+  # ▶ 장기보유특별공제(일반자산): 3년 이상 6%, 이후 1년마다 2%p 가산, 최대 30%
+  #   근거: NTS 장기보유특별공제율 표 (토지·건물·주택 일반)
+  long_term_general:
+    type: "formula"
+    min_years: 3
+    first_threshold_rate: 0.06
+    additional_rate_per_year: 0.02
+    max_rate: 0.30
+    applies_to: ["LAND", "BUILDING", "HOUSE_NON_SINGLE_HOME"]
+
+  # ▶ 장기보유특별공제(1세대1주택): 보유연 4% + 거주연 4% (연 8% 누적), 합계 최대 80%
+  #   - '20.1.1. 이후 양도분 적용 / 거주 2년 이상 요건
+  #   - 실무 적용: 보유연수는 최대 10년(40%), 거주연수도 최대 10년(40%)
+  #   근거: NTS 장기보유특별공제율(1세대1주택) 표
+  long_term_single_home:
+    type: "ownership_residence_dual_rate"
+    min_residence_years: 2
+    ownership:
+      rate_per_year: 0.04
+      max_years_counted: 10
+    residence:
+      rate_per_year: 0.04
+      max_years_counted: 10
+    max_total_rate: 0.80
+    applies_to: ["SINGLE_HOME_OWNER_OCCUPIED"]
+
+non_taxable_conditions:
+  single_home_exemption:
+    max_price: 1200000000
+    min_ownership_years: 2
+    min_residence_years: 2

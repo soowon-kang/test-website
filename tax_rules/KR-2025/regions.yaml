@@ -1,0 +1,38 @@
+version: "KR-2025.10.16-regions"
+effective:
+  from: "2025-10-16"
+  to: "2026-12-31"   # tentative; update when policy changes
+sources:
+  - name: Government policy news (2025-10-15)
+    url: "https://www.korea.kr/news/policyNewsView.do?newsId=148950973"
+  - name: KDI EIEC policy brief (2025-10-15)
+    url: "https://eiec.kdi.re.kr/policy/materialView.do?num=272171"
+  - name: 10.15 주택시장 안정화 대책 PDF
+    url: "https://files-scs.pstatic.net/2025/10/15/UbBtRaDuZd/10.15.%20%EC%A3%BC%ED%83%9D%EC%8B%9C%EC%9E%A5%20%EC%95%88%EC%A0%95%ED%99%94%20%EB%8C%80%EC%B1%85.pdf"
+meta:
+  updated_at: "2025-10-16"
+  note: "Seoul all 25 districts + 12 Gyeonggi areas designated as Controlled+SpecOverheated+LandPermit."
+  depends_on: ["ownership.yaml"]
+regions:
+  # Canonical key = kebab-case "city-district", ASCII only. Provide aliases for common variants.
+  seoul:
+    aliases: ["Seoul"]
+    districts:
+      "*": { controlled: true, spec_overheated: true, land_permit: true, over_populated: true }
+  gyeonggi:
+    aliases: ["Gyeonggi", "Gyeonggi-do"]
+    districts:
+      gwacheon:       { controlled: true, spec_overheated: true, land_permit: true }
+      gwangmyeong:    { controlled: true, spec_overheated: true, land_permit: true }
+      seongnam-bundang: { controlled: true, spec_overheated: true, land_permit: true }
+      seongnam-sujeong: { controlled: true, spec_overheated: true, land_permit: true }
+      seongnam-jungwon: { controlled: true, spec_overheated: true, land_permit: true }
+      suwon-yeongtong:  { controlled: true, spec_overheated: true, land_permit: true }
+      suwon-jangan:     { controlled: true, spec_overheated: true, land_permit: true }
+      suwon-paldal:     { controlled: true, spec_overheated: true, land_permit: true }
+      anyang-dongan:    { controlled: true, spec_overheated: true, land_permit: true }
+      yongin-suji:      { controlled: true, spec_overheated: true, land_permit: true }
+      uiwang:           { controlled: true, spec_overheated: true, land_permit: true }
+      hanam:            { controlled: true, spec_overheated: true, land_permit: true }
+fallback:
+  default: { controlled: false, spec_overheated: false, land_permit: false, over_populated: false }

@@ -1,0 +1,78 @@
+version: "KR-2025.11-holding-local"
+effective:
+  from: "2025-01-01"
+  to: "2025-12-31"
+sources:
+  - name: 재산세_요약표(사용자제공_이미지_2025)
+    note: "표준세율 vs 1주택 특례세율(공시가 9억 이하), 세부담상한·납부기간 등"
+  - name: 행정안전부_지방세법/시행령(재산세)
+    url: "https://www.mois.go.kr/"
+meta:
+  updated_at: "2025-11-04"
+  depends_on: ["ownership.yaml"]
+  currency: "KRW"
+  law_refs:
+    - "지방세법 제112조(재산세 과세대상·과세표준)"
+    - "지방세법 제111조(세율)"
+    - "지방세법 시행령 제109조(세부담상한)"
+notes:
+  - "과세표준 산정 시 공정시장가액비율 적용"
+  - "1세대 1주택(공시가격 9억원 이하) 특례세율을 별도 테이블로 제공"
+  - "세부담상한은 가격대별 상한비율을 사용"
+  - "납부기간/분할·연납 및 부가세목(도시지역분/지방교육세) 안내 포함"
+
+rates:
+  fair_market_ratio: 0.60  # 공정시장가액비율
+  residential:
+    standard:   # 표준 세율(다주택·법인·고가 등 일반)
+      brackets:
+        - { up_to: 60000000,   rate: 0.0010 }
+        - { up_to: 150000000,  rate: 0.0015 }
+        - { up_to: 300000000,  rate: 0.0025 }
+        - { up_to: 600000000,  rate: 0.0040 }
+        - { up_to: 1200000000, rate: 0.0050 }
+        - { up_to: null,       rate: 0.0070 }
+    single_home_special:  # 특례 세율(공시가 9억원 이하 1주택자)
+      eligibility:
+        single_home: true
+        max_official_price: 900000000
+      brackets:
+        - { up_to: 60000000,   rate: 0.0005 }
+        - { up_to: 150000000,  rate: 0.0010 }
+        - { up_to: 300000000,  rate: 0.0015 }
+        - { up_to: 600000000,  rate: 0.0025 }
+        - { up_to: 1200000000, rate: 0.0035 }   # 상위 구간에 적용되는 완화율
+        - { up_to: null,       rate: 0.0035 }   # 9억 이하 특례 범위 내 상한 구간 유지
+
+caps:
+  burden_limit:
+    # 세부담상한: 전년도 납부세액 대비 인상 상한
+    by_official_price:
+      - { max_official_price: 300000000,    cap_ratio: 1.05 }
+      - { max_official_price: 600000000,    cap_ratio: 1.10 }
+      - { max_official_price: null,         cap_ratio: 1.30 }  # 고가/법인 등 상위 구간
+    corporate_cap_ratio: 1.30
+
+payment:
+  residential:
+    installment_months: ["07", "09"]  # 7월·9월 1/2씩 분할
+    due_dates_rule: "매년 7월 16일~7월 31일, 9월 16일~9월 30일"
+additional_taxes:
+  urban_planning:  # 도시지역분
+    applicable: true
+    note: "도시지역에 한해 과세 가능 (지방세법·조례 참조)"
+  local_education_tax:
+    rate_over_property_tax: [0.004, 0.0012]  # 통상 0.4% 또는 0.12% 조례에 따름 (설명용)
+  resources_recycling:  # 지역개발분 등 지자체별 부가 가능 항목
+    applicable: false
+    note: "지자체 조례로 별도 과세 가능성 (기본값 false)"
+exemptions_and_reductions:
+  disaster:
+    applicable: true
+    note: "재해 등 감면은 지방세특례제한법 및 조례에 따름"
+  long_term_owner_old_house:
+    applicable: true
+    note: "노후주택 장기보유 감면 등은 조례별 상이"
+validation:
+  warnings:
+    - "수치는 제공된 요약표 기반 예시. 실제 운영 전 공식 수치 검증 및 스냅샷 갱신 요망."

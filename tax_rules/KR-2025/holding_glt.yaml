@@ -1,0 +1,77 @@
+version: "KR-2025.11-glt"
+effective:
+  from: "2025-01-01"
+  to: "2025-12-31"
+sources:
+  - name: NTS_종합부동산세_세액계산_흐름도
+    url: "https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?mi=2353&cntntsId=7735"
+  - name: NTS_종합부동산세_개요
+    url: "https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?mi=2351&cntntsId=7733"
+  - name: NTS_FAQ_종부세
+    url: "https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?mi=2357&cntntsId=7739"
+meta:
+  updated_at: "2025-11-04"
+  depends_on: ["ownership.yaml"]
+  currency: "KRW"
+  law_refs:
+    - "종합부동산세법"
+    - "종합부동산세법 시행령"
+notes:
+  - "공제금액: 일반 9억, 1세대 1주택자 12억(법인 0원)."
+  - "공정시장가액비율: 주택분 60% (NTS 공지 기준)."
+  - "산출세액 계산 시 해당연도 재산세 상당액 공제(표준세율 기준)."
+  - "1세대 1주택자 고령자/장기보유 세액공제: 합산 80% 한도."
+
+base:
+  deduction:
+    general: 900000000
+    single_home_owner: 1200000000
+    corporation: 0
+  fair_market_ratio: 0.60
+
+rates:
+  # 주택분: 과세표준 구간·세율·누진공제 (NTS 세액계산 흐름도 기준)
+  two_homes_or_less:
+    brackets:
+      - { up_to: 300000000,    rate: 0.005, deduction: 0 }
+      - { up_to: 600000000,    rate: 0.007, deduction: 600000 }
+      - { up_to: 1200000000,   rate: 0.010, deduction: 2400000 }
+      - { up_to: 2500000000,   rate: 0.013, deduction: 6000000 }
+      - { up_to: 5000000000,   rate: 0.015, deduction: 11000000 }
+      - { up_to: 9400000000,   rate: 0.020, deduction: 36000000 }
+      - { up_to: null,         rate: 0.020, deduction: 36000000 }  # 상단구간 유지(페이지 기준)
+  three_homes_or_more:
+    brackets:
+      - { up_to: 300000000,    rate: 0.005, deduction: 0 }
+      - { up_to: 600000000,    rate: 0.007, deduction: 600000 }
+      - { up_to: 1200000000,   rate: 0.010, deduction: 2400000 }
+      - { up_to: 2500000000,   rate: 0.020, deduction: 14400000 }
+      - { up_to: 5000000000,   rate: 0.030, deduction: 39400000 }
+      - { up_to: 9400000000,   rate: 0.040, deduction: 89400000 }
+      - { up_to: null,         rate: 0.050, deduction: 183400000 }
+
+credits:
+  property_tax_credit:
+    description: "해당연도 재산세로 부과된 세액의 합계액에서 표준세율 재산세상당액을 차감"
+    formula_hint: "glt_tax = (tax_base * rate - progressive_deduction) - min(actual_property_tax, std_property_tax_amount)"
+    std_property_tax_amount:
+      note: "종부세 과세표준 × 재산세 공정시장가액비율(주택 60%, 1주택 43~45% 참고) × 재산세 표준세율"
+  single_home_tax_credit:
+    max_total_ratio: 0.80
+    age_credit:
+      "60-64": 0.20
+      "65-69": 0.30
+      "70+": 0.40
+    holding_period_credit:
+      "5-9y": 0.20
+      "10-14y": 0.40
+      "15y+": 0.50
+
+payment:
+  assessment_date: "06-01"    # 과세기준일
+  filing_window:
+    exclusion_filing: { start: "09-16", end: "09-30" }
+    regular_notice:   { start: "12-01", end: "12-15" }
+validation:
+  warnings:
+    - "세율상단(2주택 이하)의 최상위구간은 공식자료에 따라 2.0%까지 표기됨. 정책 변경 시 업데이트."

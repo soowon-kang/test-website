@@ -1,0 +1,110 @@
+{
+  "version": "KR-2025.11",
+  "description": "2025년 한국 부동산 세금·규제 계산 규칙 (취득세, 양도소득세, 재산세, 종합부동산세, 규제지역 플래그)",
+  "effective": {
+    "from": "2025-01-01",
+    "to": "2025-12-31"
+  },
+  "compiled_at": "2025-11-05",
+  "sources": [
+    {
+      "name": "국세청 (NTS)",
+      "url": "https://www.nts.go.kr/",
+      "description": "양도소득세, 종합부동산세 규칙"
+    },
+    {
+      "name": "행정안전부 / 위택스",
+      "url": "https://www.wetax.go.kr/",
+      "description": "취득세, 재산세 규칙"
+    },
+    {
+      "name": "법령정보시스템",
+      "url": "https://www.law.go.kr/",
+      "description": "관련 법령 및 시행령"
+    },
+    {
+      "name": "정부 정책브리핑 (2025-10-15)",
+      "url": "https://www.korea.kr/news/policyNewsView.do?newsId=148950973",
+      "description": "서울 전역 및 경기도 12개 지역 규제지역(조정대상/투기과열/토지거래허가) 지정"
+    },
+    {
+      "name": "10.15 주택시장 안정화 대책 PDF",
+      "url": "https://files-scs.pstatic.net/2025/10/15/UbBtRaDuZd/10.15.%20%EC%A3%BC%ED%83%9D%EC%8B%9C%EC%9E%A5%20%EC%95%88%EC%A0%95%ED%99%94%20%EB%8C%80%EC%B1%85.pdf",
+      "description": "규제지역 지정 세부"
+    }
+  ],
+  "rules_files": [
+    {
+      "file": "regions.yaml",
+      "version": "KR-2025.10.16-regions",
+      "tax_type": "regulations",
+      "description": "규제지역 플래그(조정대상, 투기과열, 토지거래허가, 과밀억제) — 서울 전역 + 경기 12개 지역 적용",
+      "updated_at": "2025-11-05"
+    },
+    {
+      "file": "acquisition.yaml",
+      "version": "KR-2025.11-acq-formula",
+      "tax_type": "acquisition",
+      "description": "취득세 (6~9억 선형세율, 농어촌특별세, 지방교육세, 생애최초 감면)",
+      "updated_at": "2025-11-05"
+    },
+    {
+      "file": "capital_gain.yaml",
+      "version": "KR-2025.10-lttd",
+      "tax_type": "capital_gain",
+      "description": "양도소득세 (기본세율, 중과, 장기보유특별공제, 1세대1주택 비과세)",
+      "updated_at": "2025-11-04"
+    },
+    {
+      "file": "holding_local.yaml",
+      "version": "KR-2025.11-holding-local",
+      "tax_type": "property_tax",
+      "description": "재산세 (공정시장가액비율, 누진세율, 세부담상한, 분납)",
+      "updated_at": "2025-11-04"
+    },
+    {
+      "file": "holding_glt.yaml",
+      "version": "KR-2025.11-glt",
+      "tax_type": "comprehensive_real_estate_tax",
+      "description": "종합부동산세 (공제, 세율, 재산세상당액 공제, 공동명의 특례)",
+      "updated_at": "2025-11-04"
+    },
+    {
+      "file": "ownership.yaml",
+      "version": "KR-2025.11-ownership",
+      "description": "지방세법/국세청 개인신고 안내(공동소유 관련 일반 원칙)",
+      "updated_at": "2025-11-05"
+    }
+  ],
+  "law_refs": [
+    "지방세법 제11조(취득세)",
+    "지방세법 제111조(재산세 세율)",
+    "지방세법 제112조(재산세 과세대상·과세표준)",
+    "지방세법 §151(지방교육세)",
+    "소득세법 §95② (장기보유특별공제)",
+    "소득세법 §104 (양도소득세율)",
+    "소득세법 시행령 §159의4 (1세대1주택 장기보유특별공제)",
+    "농어촌특별세법",
+    "지방세특례제한법(생애최초 등 감면)",
+    "종합부동산세법",
+    "종합부동산세법 시행령"
+  ],
+  "notes": [
+    "본 규칙 파일의 수치는 공식 출처 기반이지만, 운영 전 반드시 최신 공식 수치로 재검증이 필요합니다.",
+    "정책 변경이나 법령 개정 시 version 및 updated_at 필드를 갱신해야 합니다.",
+    "일몰 규칙이 있는 경우 (예: 생애최초 감면, 다주택 중과 한시적 배제) active_until 필드를 확인하세요.",
+    "지자체별 특례는 regional_overrides.yaml 파일로 별도 관리될 수 있습니다.",
+    "regions.yaml은 복합 플래그 모델을 사용합니다(조정대상/투기과열/토지거래허가/과밀억제)."
+  ],
+  "validation": {
+    "schema_version": "1.1",
+    "checks": [
+      "version 형식 검증 (KR-YYYY.MM[.DD][-suffix])",
+      "effective 날짜 범위 검증",
+      "세율 범위 검증 (0.0 ~ 1.0)",
+      "일몰 날짜 경계 검증",
+      "지역 규제 플래그 스키마 검증 (controlled/spec_overheated/land_permit/over_populated)",
+      "지역 코드/별칭/디스트릭트 표준화 검증"
+    ]
+  }
+}
